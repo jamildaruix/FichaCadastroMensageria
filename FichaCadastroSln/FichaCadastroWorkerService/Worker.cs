@@ -23,26 +23,37 @@ namespace FichaCadastroWorkerService
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                await Task.Delay(10000, stoppingToken);
 
-                _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-                CadastrarFichaTopic();
+                try
+                {
+                    _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+                    messageRabbitMQ.ConfigureVirtualHost("ficha");
 
+                    CadastroNovoTopicPost();
+                    CadastroDeletarTopicPost();
+                    CadastroEnviarEmailTopicPost();
+
+                    Console.ReadLine();
+
+                }
+                catch (Exception ex)
+                {
+                    //await Task.Delay(10000, stoppingToken);
+                }
             }
         }
 
-        private void CadastrarFichaTopic()
+        private void CadastroNovoTopicPost()
         {
-            messageRabbitMQ.ConfigureVirtualHost("ficha");
+            string routingKey = "ficha-cadastro.novo-routeKey-topic";
+            string queue = "ficha-cadastro-novo-queue-topic";
 
-            messageRabbitMQ.QueueBind("ficha-queue", "ficha-exchange", "ficha-cadastro-routeKey");
+            var basicConsumer = messageRabbitMQ.InstanciarEventingBasicConsumer();
 
-            var fichaCadastroEventingBasicConsumer = messageRabbitMQ.InstanciarEventingBasicConsumer();
-
-            fichaCadastroEventingBasicConsumer.Received += (model, basicDeliverEventArgs) =>
+            basicConsumer.Received += (model, basicDeliverEventArgs) =>
             {
-                basicDeliverEventArgs.RoutingKey = "ficha-cadastro-routeKey";
-                basicDeliverEventArgs.Exchange = "ficha-exchange";
+                basicDeliverEventArgs.RoutingKey = routingKey;
+                basicDeliverEventArgs.Exchange = "ficha-exchange-topic";
 
                 var body = basicDeliverEventArgs.Body.ToArray();
                 var messageJson = Encoding.UTF8.GetString(body);
@@ -52,13 +63,76 @@ namespace FichaCadastroWorkerService
 
                 var ficha = JsonSerializer.Deserialize<FichaCreateDTO>(messageJson);
 
+                Console.WriteLine($"Mensagem : {ficha!.Mensagem}");
                 Console.WriteLine($"Nome: {ficha!.NomeCompleto}");
                 Console.WriteLine($"Email: {ficha!.EmailInformado}");
                 Console.WriteLine($"Data de Nascimento: {ficha!.DataDeNascimento}");
             };
 
-            messageRabbitMQ.BasicConsume(queue: "ficha-queue",
-                             consumer: fichaCadastroEventingBasicConsumer);
+            messageRabbitMQ.BasicConsume(queue: queue, consumer: basicConsumer);
+        }
+
+        private void CadastroDeletarTopicPost()
+        {
+            string routingKey = "ficha-cadastro.deletar-routeKey-topic";
+            string queue = "ficha-deletar-queue-topic";
+
+            messageRabbitMQ.QueueBind(queue, "ficha-exchange-topic", routingKey);
+
+            var basicConsumer = messageRabbitMQ.InstanciarEventingBasicConsumer();
+
+            basicConsumer.Received += (model, basicDeliverEventArgs) =>
+            {
+                basicDeliverEventArgs.RoutingKey = routingKey;
+                basicDeliverEventArgs.Exchange = "ficha-exchange-topic";
+
+                var body = basicDeliverEventArgs.Body.ToArray();
+                var messageJson = Encoding.UTF8.GetString(body);
+
+                Console.WriteLine($"Dados recebidos no formato json | {messageJson}");
+
+
+                var ficha = JsonSerializer.Deserialize<FichaCreateDTO>(messageJson);
+
+                Console.WriteLine($"Mensagem : {ficha!.Mensagem}");
+                Console.WriteLine($"Nome: {ficha!.NomeCompleto}");
+                Console.WriteLine($"Email: {ficha!.EmailInformado}");
+                Console.WriteLine($"Data de Nascimento: {ficha!.DataDeNascimento}");
+            };
+
+            messageRabbitMQ.BasicConsume(queue: queue, consumer: basicConsumer);
+        }
+
+
+        private void CadastroEnviarEmailTopicPost()
+        {
+            string routingKey = "ficha-cadastro.enviar-email-routeKey-topic";
+            string queue = "ficha-cadastro-enviar-email-queue-topic";
+
+            messageRabbitMQ.QueueBind(queue, "ficha-exchange-topic", routingKey);
+
+            var basicConsumer = messageRabbitMQ.InstanciarEventingBasicConsumer();
+
+            basicConsumer.Received += (model, basicDeliverEventArgs) =>
+            {
+                basicDeliverEventArgs.RoutingKey = routingKey;
+                basicDeliverEventArgs.Exchange = "ficha-exchange-topic";
+
+                var body = basicDeliverEventArgs.Body.ToArray();
+                var messageJson = Encoding.UTF8.GetString(body);
+
+                Console.WriteLine($"Dados recebidos no formato json | {messageJson}");
+
+
+                var ficha = JsonSerializer.Deserialize<FichaCreateDTO>(messageJson);
+
+                Console.WriteLine($"Mensagem : {ficha!.Mensagem}");
+                Console.WriteLine($"Nome: {ficha!.NomeCompleto}");
+                Console.WriteLine($"Email: {ficha!.EmailInformado}");
+                Console.WriteLine($"Data de Nascimento: {ficha!.DataDeNascimento}");
+            };
+
+            messageRabbitMQ.BasicConsume(queue: queue, consumer: basicConsumer);
         }
     }
 }

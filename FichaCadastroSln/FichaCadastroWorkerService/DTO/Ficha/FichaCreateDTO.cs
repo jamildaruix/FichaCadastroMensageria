@@ -7,5 +7,8 @@
         public string EmailInformado { get; set; }
 
         public DateTime DataDeNascimento { get; set; }
+
+        public string Mensagem { get; set; }
+
     }
 }

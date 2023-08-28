@@ -17,5 +17,7 @@ namespace FichaCadastroApi.DTO.Ficha
         [Required(ErrorMessage = "Campo Obrigatório")]
         [Range(typeof(DateTime), "1950-01-01", "2100-12-31", ErrorMessage = "Invalid date")]
         public DateTime DataDeNascimento { get; set; }
+
+        public string Mensagem { get; set; }
     }
 }
