@@ -20,7 +20,8 @@ namespace FichaCadastroRabbitMQ
 
         public IModel CreateConnection(string virtualHost)
         {
-            if (connection == null || connection!.IsOpen == false && _connectionFactory.VirtualHost == virtualHost)
+            if (connection == null || connection!.IsOpen == false 
+                 && _connectionFactory.VirtualHost != virtualHost)
             {
                 _connectionFactory.VirtualHost = virtualHost;
                 connection = _connectionFactory.CreateConnection();

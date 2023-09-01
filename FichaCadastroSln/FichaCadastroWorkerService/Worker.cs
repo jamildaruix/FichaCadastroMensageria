@@ -30,8 +30,8 @@ namespace FichaCadastroWorkerService
                     messageRabbitMQ.ConfigureVirtualHost("ficha");
 
                     CadastroNovoTopicPost();
-                    CadastroDeletarTopicPost();
-                    CadastroEnviarEmailTopicPost();
+                    //CadastroDeletarTopicPost();
+                    //CadastroEnviarEmailTopicPost();
 
                     Console.ReadLine();
 
